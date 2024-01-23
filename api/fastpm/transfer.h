@@ -13,6 +13,9 @@ void
 fastpm_apply_diff_transfer(PM * pm, FastPMFloat * from, FastPMFloat * to, int dir) ;
 
 void
+fastpm_apply_diff_transfer_green(PM * pm, FastPMFloat * from, FastPMFloat * to, int dir);
+
+void
 fastpm_apply_multiply_transfer(PM * pm, FastPMFloat * from, FastPMFloat * to, double value);
 
 void

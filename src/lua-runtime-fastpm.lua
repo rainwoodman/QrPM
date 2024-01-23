@@ -157,7 +157,7 @@ schema.f_nl_type.choices = {
     ['none']  = 'FASTPM_FNL_NONE',
 }
 schema.declare{name='f_nl', type='number'}
-schema.declare{name='kmax_primordial_over_knyquist', type='number', default=0.25}
+schema.declare{name='kmax_primordial_over_knyquist', type='number', default=0.666} --0.25->0.667 This is enough to avoid the aliasing associated to phi^2. Using lower values affect the bispectrum at small scales and the clustering of low mass haloes.
 schema.declare{name='scalar_amp', type='number'}
 schema.declare{name='scalar_pivot', type='number'}
 schema.declare{name='scalar_spectral_index', type='number'}
@@ -190,6 +190,12 @@ schema.declare{name='random_seed',         type='int'}
 schema.declare{name='shift',             type='boolean', default=false}
 schema.declare{name='inverted_ic',             type='boolean', default=false}
 schema.declare{name='remove_cosmic_variance',  type='boolean', default=false}
+
+schema.declare{name='ic_kernel_type',       type='enum', default='green', help='Type of kernel used during initial condition generation. The standard ones gives a suppression of the power spectrum at small scales. The green function agrees with linear theory up to knyquist.'}
+schema.ic_kernel_type.choices = {
+        green = 'FASTPM_IC_KERNEL_GREEN_FUNCTION',
+        standard = 'FASTPM_IC_KERNEL_STANDARD',
+    }
 
 function schema.read_grafic.action (read_grafic)
     if read_grafic ~= nil then

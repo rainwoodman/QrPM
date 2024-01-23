@@ -206,7 +206,7 @@ fastpm_solver_setup_lpt(FastPMSolver * fastpm,
         }
         double shift[3] = {shift0, shift0, shift0};
         /* ignore deconvolve order and grad order, since particles are likely on the grid.*/
-        pm_2lpt_solve(pm, delta_k_ic, growth_rate_func_k_ic, p, shift, fastpm->config->KERNEL_TYPE);
+        pm_2lpt_solve(pm, delta_k_ic, growth_rate_func_k_ic, p, shift, fastpm->config->KERNEL_TYPE, fastpm->config->IC_KERNEL_TYPE);
     }
 
     if(config->USE_DX1_ONLY == 1) {

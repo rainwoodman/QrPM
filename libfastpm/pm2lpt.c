@@ -11,7 +11,7 @@
 #include "pm2lpt.h"
 
 void 
-pm_2lpt_solve(PM * pm, FastPMFloat * delta_k, FastPMFuncK * growth_rate_func_k, FastPMStore * p, double shift[3], FastPMKernelType type)
+pm_2lpt_solve(PM * pm, FastPMFloat * delta_k, FastPMFuncK * growth_rate_func_k, FastPMStore * p, double shift[3], FastPMKernelType type, FastPMICKernelType ic_type)
 {
     /* read out values at locations with an inverted shift */
     int potorder, gradorder, deconvolveorder;
@@ -63,8 +63,20 @@ pm_2lpt_solve(PM * pm, FastPMFloat * delta_k, FastPMFuncK * growth_rate_func_k, 
     /* 1LPT */
     for(d = 0; d < 3; d++) {
         /* dx1 */
-        fastpm_apply_laplace_transfer(pm, delta_k, workspace, potorder);
-        fastpm_apply_diff_transfer(pm, workspace, workspace, d);
+        /*Check the variable "ic_kernel_type" and decide who to call the functions*/
+        switch(ic_type)
+        {
+            case FASTPM_IC_KERNEL_STANDARD:
+                fastpm_apply_laplace_transfer(pm, delta_k, workspace, potorder);
+                fastpm_apply_diff_transfer(pm, workspace, workspace, d);
+            break;
+            case FASTPM_IC_KERNEL_GREEN_FUNCTION:
+                fastpm_apply_laplace_transfer(pm, delta_k, workspace,0);
+                fastpm_apply_diff_transfer_green(pm, workspace, workspace, d);
+            break;
+            default:
+                fastpm_raise(-1, "Wrong kernel type\n");
+        }
 
         pm_c2r(pm, workspace);
 
@@ -73,9 +85,20 @@ pm_2lpt_solve(PM * pm, FastPMFloat * delta_k, FastPMFuncK * growth_rate_func_k, 
 
         /* dv1 */
         if (p->dv1) {
-            fastpm_apply_laplace_transfer(pm, delta_k, workspace, potorder);
-            fastpm_apply_diff_transfer(pm, workspace, workspace, d);
-
+            switch(ic_type)
+            {
+            case FASTPM_IC_KERNEL_STANDARD:
+                fastpm_apply_laplace_transfer(pm, delta_k, workspace, potorder);
+                fastpm_apply_diff_transfer(pm, workspace, workspace, d);
+            break;
+            case FASTPM_IC_KERNEL_GREEN_FUNCTION:
+                fastpm_apply_laplace_transfer(pm, delta_k, workspace,0);
+                fastpm_apply_diff_transfer_green(pm, workspace, workspace, d);
+            break;
+            default:
+                fastpm_raise(-1, "Wrong kernel type\n");
+            }
+            
             fastpm_apply_any_transfer(pm, workspace, workspace, (fastpm_fkfunc) fastpm_funck_eval2, growth_rate_func_k);
 
             pm_c2r(pm, workspace);
@@ -87,9 +110,22 @@ pm_2lpt_solve(PM * pm, FastPMFloat * delta_k, FastPMFuncK * growth_rate_func_k, 
 
     /* 2LPT */
     for(d = 0; d< 3; d++) {
-        fastpm_apply_laplace_transfer(pm, delta_k, field[d], potorder);
-        fastpm_apply_diff_transfer(pm, field[d], field[d], d);
-        fastpm_apply_diff_transfer(pm, field[d], field[d], d);
+        switch(ic_type)
+        {
+            case FASTPM_IC_KERNEL_STANDARD:
+                fastpm_apply_laplace_transfer(pm, delta_k, workspace, potorder);
+                fastpm_apply_diff_transfer(pm, workspace, workspace, d);
+                fastpm_apply_diff_transfer(pm, workspace, workspace, d);
+            break;
+            case FASTPM_IC_KERNEL_GREEN_FUNCTION:
+                fastpm_apply_laplace_transfer(pm, delta_k, workspace,0);
+                fastpm_apply_diff_transfer_green(pm, workspace, workspace, d);
+                fastpm_apply_diff_transfer_green(pm, workspace, workspace, d);
+
+            break;
+            default:
+                fastpm_raise(-1, "Wrong kernel type\n");
+        }
 
         pm_c2r(pm, field[d]);
     }
@@ -106,10 +142,21 @@ pm_2lpt_solve(PM * pm, FastPMFloat * delta_k, FastPMFuncK * growth_rate_func_k, 
     for(d = 0; d < 3; d++) {
         int d1 = D1[d];
         int d2 = D2[d];
-
-        fastpm_apply_laplace_transfer(pm, delta_k, workspace, potorder);
-        fastpm_apply_diff_transfer(pm, workspace, workspace, d1);
-        fastpm_apply_diff_transfer(pm, workspace, workspace, d2);
+        switch(ic_type)
+        {
+            case FASTPM_IC_KERNEL_STANDARD:
+                fastpm_apply_laplace_transfer(pm, delta_k, workspace, potorder);
+                fastpm_apply_diff_transfer(pm, workspace, workspace, d1);
+                fastpm_apply_diff_transfer(pm, workspace, workspace, d2);
+            break;
+            case FASTPM_IC_KERNEL_GREEN_FUNCTION:
+                fastpm_apply_laplace_transfer(pm, delta_k, workspace,0);
+                fastpm_apply_diff_transfer_green(pm, workspace, workspace, d1);
+                fastpm_apply_diff_transfer_green(pm, workspace, workspace, d2);
+            break;
+            default:
+                fastpm_raise(-1, "Wrong kernel type\n");
+        }
 
         pm_c2r(pm, workspace);
 #pragma omp parallel for
@@ -125,8 +172,21 @@ pm_2lpt_solve(PM * pm, FastPMFloat * delta_k, FastPMFuncK * growth_rate_func_k, 
          * We absorb some the negative factor in za transfer to below;
          *
          * */
-        fastpm_apply_laplace_transfer(pm, source, workspace, potorder);
-        fastpm_apply_diff_transfer(pm, workspace, workspace, d);
+
+        switch(ic_type)
+       {
+        case FASTPM_IC_KERNEL_STANDARD:
+                fastpm_apply_laplace_transfer(pm, delta_k, workspace, potorder);
+                fastpm_apply_diff_transfer(pm, workspace, workspace, d);
+        break;
+        case FASTPM_IC_KERNEL_GREEN_FUNCTION:
+                fastpm_apply_laplace_transfer(pm, delta_k, workspace,0);
+                fastpm_apply_diff_transfer_green(pm, workspace, workspace, d);
+        break;
+        default:
+                fastpm_raise(-1, "Wrong kernel type\n");
+        }
+            
 
         pm_c2r(pm, workspace);
 
